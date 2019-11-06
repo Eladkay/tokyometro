@@ -21,6 +21,7 @@ class Line(val name: String, val character: Char, val stations: MutableList<Line
             append("\n")
         }
     }
+    operator fun get(int: Int) = stations.first { it.number == int }
 }
 val lines = mutableListOf<Line>()
 fun main(args: Array<String>) {
@@ -32,7 +33,44 @@ fun main(args: Array<String>) {
         }
     }
     readWriteLineSequence()
-    println(lines)
+    //println(lines)
+    findAllHamiltonianRoutesFrom("Roppongi")
+}
+
+fun findAllHamiltonianRoutesFrom(name: String) {
+    File("${name}_all.met").createNewFile()
+    lookForHamiltonianRoute(lines, mutableListOf(name), name, false, File("${name}_all.met"))
+}
+
+fun findBestHamiltonianRouteFrom(name: String) {
+    File("${name}_best.met").createNewFile()
+    lookForHamiltonianRoute(lines, mutableListOf(name), name, true, File("${name}_best.met"))
+}
+
+fun lookForHamiltonianRoute(neededLines: MutableList<Line>, stations: MutableList<String>, current: String, fastest: Boolean, file: File) {
+    //val station = neededLines.flatMap { it.stations }.first { it.name == current.trim().toLowerCase() }
+    val linesOnStation = neededLines.filter { it.stations.any { it.name == current } }
+    if(neededLines.isEmpty()) {
+        file.appendText("$stations\n")
+        return
+    }
+    for(lineOnStation in linesOnStation) {
+        val station = lineOnStation.stations.first { it.name == current }
+        // logical south
+        south@for (i in station.number + 1..lineOnStation.stations.size) {
+            if (lineOnStation[i].hasInterchange() && lineOnStation[i].name !in stations) {
+                lookForHamiltonianRoute(neededLines.filter { it != lineOnStation }.toMutableList(), stations.toMutableList().apply { add(lineOnStation[i].name) }, lineOnStation[i].name, fastest, file)
+                if(fastest) break@south
+            }
+        }
+        // logical north
+        north@for (i in 1 until station.number) {
+            if (lineOnStation[i].hasInterchange() && lineOnStation[i].name !in stations) {
+                lookForHamiltonianRoute(neededLines.filter { it != lineOnStation }.toMutableList(), stations.toMutableList().apply { add(lineOnStation[i].name) }, lineOnStation[i].name, fastest, file)
+                if(fastest) break@north
+            }
+        }
+    }
 }
 
 fun readWriteLineSequence() {
