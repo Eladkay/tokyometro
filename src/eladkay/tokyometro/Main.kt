@@ -21,10 +21,11 @@ class Line(val name: String, val character: Char, val stations: MutableList<Line
             append("\n")
         }
     }
-    operator fun get(int: Int) = stations.first { it.number == int }
+    operator fun get(int: Int) = stations.firstOrNull { it.number == int } ?: throw Exception("$int; ${stations.size}")
 }
 val lines = mutableListOf<Line>()
 fun main(args: Array<String>) {
+
     File("lines.met").readLines().map { it.split(" ") }.mapTo(lines) { Line(it[1], it[0].toCharArray()[0]) }
     File("stations.met").readLines().map { it.split(" ") }.forEach {
         for(c in it[1]) {
@@ -33,18 +34,20 @@ fun main(args: Array<String>) {
         }
     }
     readWriteLineSequence()
+    File("stations.met").readLines().map { it.split(" ")[0] }.forEach {
+        findBestHamiltonianRouteFrom(it)
+    }
     //println(lines)
-    findAllHamiltonianRoutesFrom("Roppongi")
 }
 
 fun findAllHamiltonianRoutesFrom(name: String) {
-    File("${name}_all.met").createNewFile()
-    lookForHamiltonianRoute(lines, mutableListOf(name), name, false, File("${name}_all.met"))
+    File("bests/${name}_all.met").createNewFile()
+    lookForHamiltonianRoute(lines, mutableListOf(name), name, false, File("bests/${name}_all.met"))
 }
 
 fun findBestHamiltonianRouteFrom(name: String) {
-    File("${name}_best.met").createNewFile()
-    lookForHamiltonianRoute(lines, mutableListOf(name), name, true, File("${name}_best.met"))
+    File("bests/${name}_best.met").createNewFile()
+    lookForHamiltonianRoute(lines, mutableListOf(name), name, true, File("bests/${name}_best.met"))
 }
 
 fun lookForHamiltonianRoute(neededLines: MutableList<Line>, stations: MutableList<String>, current: String, fastest: Boolean, file: File) {
@@ -57,19 +60,21 @@ fun lookForHamiltonianRoute(neededLines: MutableList<Line>, stations: MutableLis
     for(lineOnStation in linesOnStation) {
         val station = lineOnStation.stations.first { it.name == current }
         // logical south
-        south@for (i in station.number + 1..lineOnStation.stations.size) {
-            if (lineOnStation[i].hasInterchange() && lineOnStation[i].name !in stations) {
-                lookForHamiltonianRoute(neededLines.filter { it != lineOnStation }.toMutableList(), stations.toMutableList().apply { add(lineOnStation[i].name) }, lineOnStation[i].name, fastest, file)
-                if(fastest) break@south
+        if(station.number != lineOnStation.stations.size)
+            south@for (i in station.number + 1..lineOnStation.stations.size) {
+                if (lineOnStation[i].hasInterchange() && lineOnStation[i].name !in stations) {
+                    lookForHamiltonianRoute(neededLines.filter { it != lineOnStation }.toMutableList(), stations.toMutableList().apply { add(lineOnStation[i].name) }, lineOnStation[i].name, fastest, file)
+                    if(fastest) break@south
+                }
             }
-        }
         // logical north
-        north@for (i in 1 until station.number) {
-            if (lineOnStation[i].hasInterchange() && lineOnStation[i].name !in stations) {
-                lookForHamiltonianRoute(neededLines.filter { it != lineOnStation }.toMutableList(), stations.toMutableList().apply { add(lineOnStation[i].name) }, lineOnStation[i].name, fastest, file)
-                if(fastest) break@north
+        if(station.number != 1)
+            north@for (i in 1 until station.number) {
+                if (lineOnStation[i].hasInterchange() && lineOnStation[i].name !in stations) {
+                    lookForHamiltonianRoute(neededLines.filter { it != lineOnStation }.toMutableList(), stations.toMutableList().apply { add(lineOnStation[i].name) }, lineOnStation[i].name, fastest, file)
+                    if(fastest) break@north
+                }
             }
-        }
     }
 }
 
