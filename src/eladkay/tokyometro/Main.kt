@@ -3,7 +3,7 @@ package eladkay.tokyometro
 import java.io.File
 import java.util.*
 
-class LineStation(val name: String, val number: Int = -1, val distance: Double = -1.0) {
+class LineStation(val name: String, var number: Int = -1, val distance: Double = -1.0) {
     override fun toString(): String {
         return name
     }
@@ -13,7 +13,7 @@ class Line(val name: String, val character: Char, val stations: MutableList<Line
     override fun toString(): String {
         return buildString {
             append("\n$name\n")
-            for((i, station) in stations.withIndex()) append("       ${i+1}. ${station.name}\n")
+            for((i, station) in stations.withIndex()) append("       ${station.number}. ${station.name}\n")
             append("\n")
         }
     }
@@ -24,15 +24,24 @@ fun main(args: Array<String>) {
     File("stations.met").readLines().map { it.split(" ") }.forEach {
         for(c in it[1]) lines.firstOrNull { it.character == c }?.stations?.add(LineStation(it[0])) ?: throw Exception(c.toString())
     }
-    println(lines)
-    writeLineSequence()
+    readWriteLineSequence()
+    //println(lines)
 }
 
-fun writeLineSequence() {
+fun readWriteLineSequence() {
     val scanner = Scanner(System.`in`)
     for(line in lines) {
         val file = File("lines/${line.name}.met")
-        if(file.exists()) continue
+        if(file.exists()) {
+            print("hmm")
+            val stations = file.readLines()
+            for((i, station) in stations.withIndex()) {
+                println("$i $station")
+                line.stations.first { it.name.toLowerCase().trim() == station.toLowerCase().trim() }.number = i+1
+            }
+            line.stations.sortBy { it.number }
+            continue
+        }
         val symbol = line.character.toUpperCase()
         var i = 1
         fun getSymbol() = "$symbol${if(i > 9) i.toString() else "0$i"}"
