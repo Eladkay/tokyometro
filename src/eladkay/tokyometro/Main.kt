@@ -36,6 +36,7 @@ fun main(args: Array<String>) {
     readWriteLineSequence()
     File("stations.met").readLines().map { it.split(" ")[0] }.forEach {
         findBestHamiltonianRouteFrom(it)
+        if(File("bests/${it}_best.met").readText().isBlank()) println("$it has no best routes!")
     }
     //println(lines)
 }
