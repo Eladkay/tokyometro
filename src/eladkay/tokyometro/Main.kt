@@ -15,7 +15,7 @@ class LineStation(val name: String, val line: String, var number: Int = -1, val 
 class Line(val name: String, val character: Char, val stations: MutableList<LineStation> = mutableListOf()) {
     override fun toString(): String {
         return buildString {
-            append("\n$name\n")
+            append("\n$name ($character)\n")
             stations.sortBy { it.number }
             for(station in stations) append("       ${station.number}. ${station.name} (${station.hasInterchange()})\n")
             append("\n")
@@ -34,11 +34,13 @@ fun main(args: Array<String>) {
         }
     }
     readWriteLineSequence()
+    println(lines)
     File("stations.met").readLines().map { it.split(" ")[0] }.forEach {
         findBestHamiltonianRouteFrom(it)
-        if(File("bests/${it}_best.met").readText().isBlank()) println("$it has no best routes!")
+        if(!File("bests/${it}_best.met").readText().isBlank()) println("$it has best routes!")
+        else File("bests/${it}_best.met").delete()
     }
-    //println(lines)
+
 }
 
 fun findAllHamiltonianRoutesFrom(name: String) {
@@ -86,6 +88,7 @@ fun readWriteLineSequence() {
         if(file.exists()) {
             val stations = file.readLines()
             for((i, station) in stations.withIndex()) {
+                if(line.stations.none { it.name.toLowerCase().trim() == station.toLowerCase().trim() }) throw Exception("$station; ${line.name}")
                 line.stations.first { it.name.toLowerCase().trim() == station.toLowerCase().trim() }.number = i+1
             }
             line.stations.sortBy { it.number }
